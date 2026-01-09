@@ -1,0 +1,168 @@
+[
+    {
+        "id": "0eb3febc4f28a396",
+        "type": "inject",
+        "z": "7649faa3400455b0",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 160,
+        "y": 80,
+        "wires": [
+            [
+                "a15d03105a8064fa"
+            ]
+        ]
+    },
+    {
+        "id": "6a1364d7453e5332",
+        "type": "function",
+        "z": "7649faa3400455b0",
+        "name": "function 2",
+        "func": "const fs = global.get('fs');\nconst path =
+global.get('path');\n\nconst filePath = msg.filename;\n\nif
+(!filePath) {\n    node.error('msg.filename is missing');\n    return
+null;\n}\n\nif (!fs.existsSync(filePath)) {\n    node.error(`File not
+found after fswebcam finished: ${filePath}`);\n    return
+null;\n}\n\n/*\nmsg.payload = fs.readFileSync(filePath);\nmsg.filename
+= path.basename(filePath);\nmsg.headers = {\n    \"Content-Type\":
+\"multipart/form-data\"\n};\n*/\n\nmsg.payload = {\n    file: {\n
+  value: fs.readFileSync(filePath),\n        options: {\n
+filename: path.basename(msg.filename),\n            contentType:
+\"image/jpeg\"\n        }\n    }\n};\n\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 680,
+        "y": 180,
+        "wires": [
+            [
+                "8ccb6cc979554244"
+            ]
+        ]
+    },
+    {
+        "id": "c5158a0350c4a41b",
+        "type": "exec",
+        "z": "7649faa3400455b0",
+        "command": "fswebcam -d /dev/video2 -r 320x240 --no-banner {{payload}}",
+        "addpay": "payload",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "30",
+        "winHide": false,
+        "oldrc": false,
+        "name": "",
+        "x": 330,
+        "y": 180,
+        "wires": [
+            [],
+            [],
+            [
+                "6a1364d7453e5332"
+            ]
+        ]
+    },
+    {
+        "id": "a15d03105a8064fa",
+        "type": "function",
+        "z": "7649faa3400455b0",
+        "name": "function 3",
+        "func": "const ts = Date.now();\nmsg.filename =
+`/data/images/image.jpg`;\nmsg.payload = msg.filename;\nreturn
+msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 80,
+        "wires": [
+            [
+                "c5158a0350c4a41b"
+            ]
+        ]
+    },
+    {
+        "id": "8ccb6cc979554244",
+        "type": "exec",
+        "z": "7649faa3400455b0",
+        "command": "curl -s -X POST -F \"file=@/data/images/test.jpg\"
+http://edge-impulse:1337/api/image",
+        "addpay": "",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "30",
+        "winHide": false,
+        "oldrc": false,
+        "name": "",
+        "x": 400,
+        "y": 300,
+        "wires": [
+            [
+                "4a3fddc5f86ef4eb"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "4a3fddc5f86ef4eb",
+        "type": "function",
+        "z": "7649faa3400455b0",
+        "name": "function 4",
+        "func": "try {\n    msg.payload = JSON.parse(msg.payload);\n
+ return msg;\n} catch (err) {\n    node.error(\"Failed to parse Edge
+Impulse response\", msg);\n    return null;\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 820,
+        "y": 280,
+        "wires": [
+            [
+                "4d4fc9ef378ed7ee"
+            ]
+        ]
+    },
+    {
+        "id": "4d4fc9ef378ed7ee",
+        "type": "debug",
+        "z": "7649faa3400455b0",
+        "name": "debug 5",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1000,
+        "y": 280,
+        "wires": []
+    }
+]
+

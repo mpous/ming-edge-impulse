@@ -1,0 +1,67 @@
+services:
+
+  edge-impulse:
+    build: ./edgeimpulse
+    container_name: edge-impulse
+    networks:
+      - ming-network
+    ports:
+      - "1337:1337"
+
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: mosquitto
+    ports:
+      - "1883:1883"
+    volumes:
+      - /home/arduino/docker-data/mosquitto/config:/mosquitto/config
+      - /home/arduino/docker-data/mosquitto/data:/mosquitto/data
+      - /home/arduino/docker-data/mosquitto/log:/mosquitto/log
+    restart: unless-stopped
+    networks:
+      - ming-network
+
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    volumes:
+      - /home/arduino/docker-data/influxdb:/var/lib/influxdb2
+    restart: unless-stopped
+    networks:
+      - ming-network
+
+  node-red:
+    #image: nodered/node-red:latest-debian
+    build: ./node-red
+    container_name: node-red
+    ports:
+      - "80:1880"
+    volumes:
+      - /home/arduino/docker-data/node-red:/data
+    restart: unless-stopped
+    devices:
+      - /dev/video2:/dev/video2
+      - /dev/video1:/dev/video1
+      - /dev/video0:/dev/video0
+    networks:
+      - ming-network
+    group_add:
+      - video
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "8080:3000"
+    volumes:
+      - /home/arduino/docker-data/grafana:/var/lib/grafana
+    restart: unless-stopped
+    networks:
+      - ming-network
+
+networks:
+  ming-network:
+    driver: bridge
+
