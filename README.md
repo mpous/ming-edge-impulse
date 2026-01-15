@@ -95,12 +95,13 @@ Verify that containers are running:
 docker ps
 ```
 
-You should be able to access from your computer or from the Arduino UNO Q browser to the deployed services:
+You should be able to access from your computer using the local IP address of the UNO Q if you are connected to the same network or from the Arduino UNO Q browser or the Arduino UNO Q services using the name of the deployed service. These are the ports used for each service:
 
-* Node-RED at http://localhost or http://local ip address of the Arduino UNO Q
-* Grafana at http://localhost:8080
-* InfluxDB at http://localhost:8086
-* Edge Impulse API at http://localhost:1337
+* Node-RED at port 80
+* Grafana at 8080
+* InfluxDB at 8086
+* Edge Impulse API at 1337
+* Mosquitto Broker at 1883
 
 
 ### Node-RED Usage
