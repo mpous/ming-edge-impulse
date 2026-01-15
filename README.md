@@ -38,6 +38,33 @@ All services are connected via a dedicated Docker network.
 
 ## Getting started
 
+### Train an object detection model with Edge Impulse
+
+In this project we are going to do object detection in the edge with Arduino UNO Q using a computer vision machine learning model trained with Edge Impulse.
+
+Before deploying the MING stack, we are going to train the Machine learning model. Create a Project on Edge Impulse.
+
+<img width="800" alt="Create a project on Edge Impulse" src="https://github.com/user-attachments/assets/dcf641f9-83b2-4502-b2ef-8cbf3dbab7ac" />
+
+Collect images and label the objects that you want to detect in the model.
+
+<img width="800" alt="Collect images and label the objects detected" src="https://github.com/user-attachments/assets/f228d4e8-fe73-45f7-bfb4-0af0d7ac2d71" />
+
+Create the impulse with the Object detection learning block. In this project I created I only detect rubber ducks but you can have more classes to detect in the images.
+
+<img width="800" alt="Create the Impulse in Edge Impulse" src="https://github.com/user-attachments/assets/519feac3-9902-49e3-8981-f62e081ef2f0" />
+
+Once the Impulse is successfully created, go to Images and save the `RGB` parameters. And then Generate the features. Then go to Object detection and define the settings to train the neural network. Choose the model `FOMO (Faster Objects, More Objects) MobileNetV2 0.35` as the neural network that we will use for training our neural network.
+
+<img width="800" alt="Captura de pantalla 2026-01-15 a les 12 27 56" src="https://github.com/user-attachments/assets/806201c8-98d5-4882-a924-b908b44a4d80" />
+
+Go to Deployments and choose the `Docker container` in order to get the instructions to deploy the Docker container in your MING stack.
+
+<img width="800" alt="Deploy the Docker container" src="https://github.com/user-attachments/assets/7045936a-f0f8-4231-9c57-79b73ffff2dd" />
+
+
+### Deploy the application in the Arduino UNO Q
+
 Access via SSH to your Arduino UNO Q.
 
 If you can't use git in your Arduino UNO Q, try:
@@ -54,7 +81,9 @@ git clone https://github.com/your-org/ming-edge-impulse.git
 cd ming-edge-impulse
 ```
 
-Start all services:
+Modify the Dockerfile template from the `edgeimpulse` folder pasting the api key and docker container from the Edge Impulse Studio.
+
+Once the Dockerfile template from `edgeimpulse` folder has been updated, start all services:
 
 ```
 docker compose up -d
@@ -68,7 +97,7 @@ docker ps
 
 You should be able to access from your computer or from the Arduino UNO Q browser to the deployed services:
 
-* Node-RED at http://localhost or http://<local ip address of the Arduino UNO Q>
+* Node-RED at http://localhost or http://local ip address of the Arduino UNO Q
 * Grafana at http://localhost:8080
 * InfluxDB at http://localhost:8086
 * Edge Impulse API at http://localhost:1337
@@ -80,7 +109,10 @@ We are going to use Node-RED as the central orchestration layer in the MING stac
 
 We are going to build an application that does object detection running inference with Edge Impulse, depending on the objects detected in the images captured from the camera, store the detected objects in InfluxDB and visualize the aggregated information in Grafana dahsboards.
 
+<img width="800" alt="Initial flow to capture images and run inference to the Edge Impulse service" src="https://github.com/user-attachments/assets/1eba1ef3-a252-4ad2-89b8-091849821659" />
+
 Node-RED data and images will be persisted using a Docker volume mapped to `/data` and `/data/images`.
+
 
 ### Edge Impulse Inference
 
@@ -94,9 +126,9 @@ The endpoint expects a multipart/form-data request with a file field containing 
 
 Inference responses include bounding boxes, labels, confidence scores, and timing information.
 
-This stack assumes that inference is run locally and synchronously as part of a Node-RED flow.
+<img width="800" alt="Node-RED flow with the MING stack" src="https://github.com/user-attachments/assets/a81901af-aeaa-4feb-ac0b-4888e1103d8a" />
 
-<img width="400" alt="Node-RED flow with the MING stack" src="https://github.com/user-attachments/assets/a81901af-aeaa-4feb-ac0b-4888e1103d8a" />
+This stack assumes that inference is run locally and synchronously as part of a Node-RED flow.
 
 
 ### InfluxDB Data Model
