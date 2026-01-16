@@ -8,9 +8,58 @@
         "env": []
     },
     {
+        "id": "8c4d2cc81e36a6f3",
+        "type": "group",
+        "z": "7649faa3400455b0",
+        "name": "Edge AI: Image Capture and Inference",
+        "style": {
+            "stroke": "#92d04f",
+            "fill": "#e3f3d3",
+            "label": true,
+            "label-position": "ne",
+            "color": "#000000"
+        },
+        "nodes": [
+            "0eb3febc4f28a396",
+            "6a1364d7453e5332",
+            "c5158a0350c4a41b",
+            "a15d03105a8064fa",
+            "8ccb6cc979554244",
+            "f44edc915090c519",
+            "62c7299b9a1a1a9b"
+        ],
+        "x": 34,
+        "y": 59,
+        "w": 1272,
+        "h": 289.5
+    },
+    {
+        "id": "0be6b0791d82993a",
+        "type": "group",
+        "z": "7649faa3400455b0",
+        "name": "Store inferenced data on InfluxDB",
+        "style": {
+            "stroke": "#ff3f3f",
+            "fill": "#ffbfbf",
+            "label": true,
+            "color": "#000000"
+        },
+        "nodes": [
+            "73a980f372fdaf65",
+            "db5b44867760a1a9",
+            "c74181b78532bb3e",
+            "45956336eca7a9e7"
+        ],
+        "x": 34,
+        "y": 459,
+        "w": 1132,
+        "h": 162
+    },
+    {
         "id": "0eb3febc4f28a396",
         "type": "inject",
         "z": "7649faa3400455b0",
+        "g": "8c4d2cc81e36a6f3",
         "name": "",
         "props": [
             {
@@ -28,7 +77,7 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 120,
+        "x": 160,
         "y": 100,
         "wires": [
             [
@@ -40,6 +89,7 @@
         "id": "6a1364d7453e5332",
         "type": "function",
         "z": "7649faa3400455b0",
+        "g": "8c4d2cc81e36a6f3",
         "name": "Image Check",
         "func": "const fs = global.get('fs');\n\nconst filePath = msg.filename;\n\nif (!filePath) {\n    node.error('msg.filename is missing');\n    return null;\n}\n\nif (!fs.existsSync(filePath)) {\n    node.error(`File not found after fswebcam finished: ${filePath}`);\n    return null;\n}\n/*\nmsg.payload = {\n    file: {\n        value: fs.readFileSync(filePath),\n        options: {\n            filename: path.basename(msg.filename),\n            contentType: \"image/jpeg\"\n        }\n    }\n};\n*/\n\nreturn msg;",
         "outputs": 1,
@@ -48,8 +98,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 250,
-        "y": 260,
+        "x": 290,
+        "y": 240,
         "wires": [
             [
                 "8ccb6cc979554244"
@@ -60,6 +110,7 @@
         "id": "c5158a0350c4a41b",
         "type": "exec",
         "z": "7649faa3400455b0",
+        "g": "8c4d2cc81e36a6f3",
         "command": "fswebcam -d /dev/video2 -r 320x240 --no-banner {{payload}}",
         "addpay": "payload",
         "append": "",
@@ -68,8 +119,8 @@
         "winHide": false,
         "oldrc": false,
         "name": "",
-        "x": 250,
-        "y": 200,
+        "x": 290,
+        "y": 180,
         "wires": [
             [],
             [],
@@ -82,6 +133,7 @@
         "id": "a15d03105a8064fa",
         "type": "function",
         "z": "7649faa3400455b0",
+        "g": "8c4d2cc81e36a6f3",
         "name": "Image Preparation",
         "func": "const ts = Date.now();\nmsg.filename = `/data/images/image.jpg`;\nmsg.payload = msg.filename;\nreturn msg;\n",
         "outputs": 1,
@@ -90,7 +142,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 310,
+        "x": 350,
         "y": 100,
         "wires": [
             [
@@ -102,6 +154,7 @@
         "id": "8ccb6cc979554244",
         "type": "exec",
         "z": "7649faa3400455b0",
+        "g": "8c4d2cc81e36a6f3",
         "command": "curl -s -X POST -F \"file=@/data/images/image.jpg\" http://edge-impulse:1337/api/image",
         "addpay": "",
         "append": "",
@@ -110,8 +163,8 @@
         "winHide": false,
         "oldrc": false,
         "name": "",
-        "x": 330,
-        "y": 320,
+        "x": 370,
+        "y": 300,
         "wires": [
             [
                 "f44edc915090c519"
@@ -124,6 +177,7 @@
         "id": "f44edc915090c519",
         "type": "function",
         "z": "7649faa3400455b0",
+        "g": "8c4d2cc81e36a6f3",
         "name": "MQTT Inference Mapper",
         "func": "try {\n    // ---- Parse Edge Impulse response if needed\n    if (typeof msg.payload === \"string\") {\n        msg.payload = JSON.parse(msg.payload);\n    }\n\n    const camera = \"video2\";\n    const modelId = \"duck-detector\";\n    const modelVersion = \"1.0.0\";\n    const modelName = \"Duck Detection\";\n\n    // ---- Edge Impulse detections\n    const boxes = msg.payload?.result?.bounding_boxes || [];\n\n    if (!Array.isArray(boxes) || boxes.length === 0) {\n        return null; // No detections → stop flow early\n    }\n\n    // ---- Build detection objects (HiveMQ / Edge AI format)\n    const detections = boxes.map(b => ({\n        class: b.label,\n        score: Number(b.value),\n        boundingBox: {\n            x: Number(b.x),\n            y: Number(b.y),\n            width: Number(b.width),\n            height: Number(b.height)\n        }\n    }));\n\n    // ---- Final MQTT payload\n    msg.payload = {\n        identifier: `inference-${msg._msgid}`,\n        model: {\n            identifier: modelId,\n            version: modelVersion,\n            name: modelName\n        },\n        tags: {\n            source: camera,\n            imagePath: msg.filename,\n            objectCount: detections.length\n        },\n        resultType: \"detections\",\n        result: {\n            detections\n        },\n        explanation: {}\n    };\n\n    // ---- MQTT topic\n    msg.topic = `enterprise/site/area/line/cell/${camera}/${modelId}/${modelVersion}/inference`;\n\n    return msg;\n\n} catch (err) {\n    node.error(\"Failed to process Edge Impulse inference\", err);\n    return null;\n}\n",
         "outputs": 1,
@@ -132,8 +186,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 790,
-        "y": 240,
+        "x": 830,
+        "y": 220,
         "wires": [
             [
                 "62c7299b9a1a1a9b"
@@ -144,6 +198,7 @@
         "id": "73a980f372fdaf65",
         "type": "function",
         "z": "7649faa3400455b0",
+        "g": "0be6b0791d82993a",
         "name": "InfluxDB Mapper",
         "func": "\nif (!msg.payload?.result?.detections) {\n    return null;\n}\n\nconst detections = msg.payload.result.detections;\nconst meta = msg.payload;\n\nmsg.measurement = \"edge_ai_detection\";\n\nmsg.tags = {\n    model: meta.model.identifier,\n    version: meta.model.version,\n    source: meta.tags.source,\n    class: \"rubber-ducky\"\n};\n\nmsg.payload = detections.map((det, index) => ({\n    confidence: Number(det.score),\n    bbox_x: det.boundingBox.x,\n    bbox_y: det.boundingBox.y,\n    bbox_width: det.boundingBox.width,\n    bbox_height: det.boundingBox.height,\n    object_count: meta.tags.objectCount,\n    object_index: index\n}));\n\nreturn msg;",
         "outputs": 1,
@@ -152,8 +207,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 670,
-        "y": 640,
+        "x": 650,
+        "y": 580,
         "wires": [
             [
                 "c74181b78532bb3e",
@@ -165,6 +220,7 @@
         "id": "62c7299b9a1a1a9b",
         "type": "mqtt out",
         "z": "7649faa3400455b0",
+        "g": "8c4d2cc81e36a6f3",
         "name": "",
         "topic": "enterprise/site/area/line/cell/video2/duck-detector/1.0.0/inference",
         "qos": "",
@@ -175,14 +231,15 @@
         "correl": "",
         "expiry": "",
         "broker": "29b42145a9b933cf",
-        "x": 1000,
-        "y": 320,
+        "x": 1040,
+        "y": 300,
         "wires": []
     },
     {
         "id": "db5b44867760a1a9",
         "type": "mqtt in",
         "z": "7649faa3400455b0",
+        "g": "0be6b0791d82993a",
         "name": "",
         "topic": "enterprise/site/area/line/cell/video2/duck-detector/#",
         "qos": "2",
@@ -192,8 +249,8 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 270,
-        "y": 640,
+        "x": 250,
+        "y": 580,
         "wires": [
             [
                 "73a980f372fdaf65"
@@ -204,6 +261,7 @@
         "id": "c74181b78532bb3e",
         "type": "influxdb out",
         "z": "7649faa3400455b0",
+        "g": "0be6b0791d82993a",
         "influxdb": "9376f7b3ea34c765",
         "name": "",
         "measurement": "edge_ai_detection",
@@ -214,14 +272,15 @@
         "retentionPolicyV18Flux": "",
         "org": "EdgeImpulse",
         "bucket": "edge-impulse-detections",
-        "x": 990,
-        "y": 640,
+        "x": 970,
+        "y": 580,
         "wires": []
     },
     {
         "id": "45956336eca7a9e7",
         "type": "debug",
         "z": "7649faa3400455b0",
+        "g": "0be6b0791d82993a",
         "name": "Debugging msg Object",
         "active": true,
         "tosidebar": true,
@@ -231,8 +290,8 @@
         "targetType": "full",
         "statusVal": "",
         "statusType": "auto",
-        "x": 930,
-        "y": 560,
+        "x": 910,
+        "y": 500,
         "wires": []
     },
     {
@@ -282,7 +341,7 @@
         "rejectUnauthorized": true
     },
     {
-        "id": "9368cc313ddcb70a",
+        "id": "9e26693be4eae505",
         "type": "global-config",
         "env": [],
         "modules": {
