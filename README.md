@@ -127,7 +127,7 @@ The endpoint expects a multipart/form-data request with a file field containing 
 
 Inference responses include bounding boxes, labels, confidence scores, and timing information.
 
-<img width="800" alt="Node-RED flow with the MING stack" src="https://github.com/user-attachments/assets/a81901af-aeaa-4feb-ac0b-4888e1103d8a" />
+<img width="800" alt="Node-RED flow with the MING stack"  src="https://github.com/user-attachments/assets/ce38325b-e31e-4b5b-8675-e99089db24a5" />
 
 This stack assumes that inference is run locally and synchronously as part of a Node-RED flow.
 
