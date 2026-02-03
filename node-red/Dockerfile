@@ -12,6 +12,9 @@ RUN apt-get update && \
 # Copy custom settings.js
 COPY settings.js /data/settings.js
 
+# Copy flow definition for easy import
+COPY flow.json /opt/flows/flow.json
+
 # Fix ownership (CRITICAL)
 RUN chown -R node-red:node-red /data
 
